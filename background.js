@@ -53,13 +53,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 /**
- * Capture currently visible viewport slice of active tab
+ * Capture currently visible viewport slice of active tab with rate-limit retry support
  */
-function captureVisibleTab() {
+function captureVisibleTab(retries = 4, retryDelayMs = 600) {
   return new Promise((resolve, reject) => {
-    chrome.tabs.captureVisibleTab(null, { format: 'png', quality: 100 }, (dataUrl) => {
+    chrome.tabs.captureVisibleTab(null, { format: 'png', quality: 100 }, async (dataUrl) => {
       if (chrome.runtime.lastError) {
-        return reject(new Error(chrome.runtime.lastError.message));
+        const errorMsg = chrome.runtime.lastError.message || '';
+        if ((errorMsg.includes('MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND') || errorMsg.includes('quota')) && retries > 0) {
+          console.warn(`Rate limit encountered (${errorMsg}). Retrying in ${retryDelayMs}ms...`);
+          await delay(retryDelayMs);
+          try {
+            const retryRes = await captureVisibleTab(retries - 1, retryDelayMs + 300);
+            return resolve(retryRes);
+          } catch (err) {
+            return reject(err);
+          }
+        }
+        return reject(new Error(errorMsg));
       }
       if (!dataUrl) {
         return reject(new Error('Failed to capture visible tab image.'));
@@ -83,19 +94,19 @@ async function captureFullPage(tabId) {
   const slices = [];
 
   let currentY = 0;
-  // Capture max 15 slices to keep canvas performance fast and stable
+  // Capture max 15 slices to keep performance fast and quota safe
   const maxSlices = 15;
   let sliceCount = 0;
 
   try {
     while (currentY < totalHeight && sliceCount < maxSlices) {
       // Scroll to slice Y
-      await sendMessageToTab(tabId, { action: 'SCROLL_TO', y: currentY, delay: 180 });
-      // Small pause for layout/render
-      await delay(120);
+      await sendMessageToTab(tabId, { action: 'SCROLL_TO', y: currentY, delay: 250 });
+      // Pause 550ms between captures to strictly respect Chrome's MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND quota
+      await delay(550);
 
-      // Capture slice image
-      const sliceDataUrl = await captureVisibleTab();
+      // Capture slice image with retry protection
+      const sliceDataUrl = await captureVisibleTab(4, 700);
       slices.push({ y: currentY, dataUrl: sliceDataUrl });
 
       currentY += viewportHeight;
@@ -111,8 +122,6 @@ async function captureFullPage(tabId) {
     return slices[0].dataUrl;
   }
 
-  // Otherwise stitch slices together via offscreen canvas or simple top slice
-  // Note: For Chrome Service Worker compatibility, we return the primary full slice or canvas representation
   return slices[0].dataUrl;
 }
 
