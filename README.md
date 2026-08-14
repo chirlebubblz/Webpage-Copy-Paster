@@ -30,7 +30,7 @@ This extension works on **Google Chrome**, **Microsoft Edge**, **Brave**, **Oper
 3. Enable **Developer mode** using the toggle in the top-right corner.
 4. Click **Load unpacked**.
 5. Select the `Page Snapshot` repository directory.
-6. Pin **Webpage Snapshot Studio** to your browser toolbar!
+6. Pin **Webpage Copy Paster** to your browser toolbar!
 
 ---
 

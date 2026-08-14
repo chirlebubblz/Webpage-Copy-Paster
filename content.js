@@ -1,5 +1,5 @@
 /**
- * Webpage Snapshot Studio - Content Script
+ * Webpage Copy Paster - Content Script
  * Runs in active webpage context to extract live DOM, bundle Single-File HTML,
  * and assist in full-page screenshot scrolling.
  */
@@ -137,7 +137,7 @@
     // 2. Inline author stylesheets into <style> tags
     const styleContainer = document.createElement('style');
     styleContainer.setAttribute('data-snapshot-inlined', 'true');
-    let aggregatedCss = '/* Inlined by Webpage Snapshot Studio */\n';
+    let aggregatedCss = '/* Inlined by Webpage Copy Paster */\n';
 
     try {
       for (const sheet of Array.from(document.styleSheets)) {

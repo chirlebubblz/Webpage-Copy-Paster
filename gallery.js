@@ -1,5 +1,5 @@
 /**
- * Webpage Snapshot Studio - Gallery & Code Inspector Controller
+ * Webpage Copy Paster - Gallery & Code Inspector Controller
  */
 
 document.addEventListener('DOMContentLoaded', async () => {

@@ -1,5 +1,5 @@
 /**
- * Webpage Snapshot Studio - Popup Controller
+ * Webpage Copy Paster - Popup Controller
  */
 
 document.addEventListener('DOMContentLoaded', async () => {

@@ -1,5 +1,5 @@
 /**
- * Webpage Snapshot Studio - Service Worker (Background)
+ * Webpage Copy Paster - Service Worker (Background)
  * Manages tab capture, screenshot stitching, file downloads, and storage history.
  */
 
