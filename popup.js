@@ -28,19 +28,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     activeTab = tabs[0];
 
-    if (activeTab && activeTab.url) {
-      const urlObj = new URL(activeTab.url);
-      activeDomainEl.textContent = urlObj.hostname || activeTab.url;
+    if (activeTab && activeTab.url && isSupportedUrl(activeTab.url)) {
+      try {
+        const urlObj = new URL(activeTab.url);
+        activeDomainEl.textContent = urlObj.hostname || activeTab.url;
+      } catch (_) {
+        activeDomainEl.textContent = activeTab.url;
+      }
       
-      // Inject content script if needed or query metrics
+      // Query metrics from content script
       initializePageMetrics(activeTab.id);
     } else {
-      activeDomainEl.textContent = 'Restricted page';
-      pageStatusEl.textContent = 'N/A';
+      activeDomainEl.textContent = 'Protected Browser Page';
+      pageStatusEl.textContent = 'Restricted';
+      htmlSizeEl.textContent = 'N/A';
     }
   } catch (err) {
     console.error('Error fetching active tab:', err);
     activeDomainEl.textContent = 'Error loading tab';
+  }
+
+  function isSupportedUrl(url) {
+    if (!url) return false;
+    return (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('file://')
+    ) && !url.includes('chromewebstore.google.com');
   }
 
   /**
@@ -58,7 +72,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         htmlSizeEl.textContent = `${kbSize} KB`;
       }
     } catch (e) {
-      console.warn('Could not read page metrics:', e);
+      console.warn('Metrics query notice:', e.message);
+      htmlSizeEl.textContent = '-- KB';
     }
   }
 
