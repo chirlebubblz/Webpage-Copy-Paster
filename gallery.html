@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery & Code Inspector — Webpage Copy Paster</title>
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="4" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-name">Webpage Copy Paster Gallery</h1>
+          <p class="brand-desc">History, HTML Code Inspector & Archive Manager</p>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search snapshots by title or URL..." />
+      </div>
+
+      <div class="navbar-actions">
+        <button id="btn-clear-history" class="btn btn-secondary">Clear History</button>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="main-content">
+      <!-- Sidebar List -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Snapshot History</h2>
+          <span class="count-badge" id="history-count">0 items</span>
+        </div>
+
+        <div id="snapshot-list" class="snapshot-list">
+          <div class="empty-state">
+            <p>No snapshots captured yet.</p>
+            <small>Use the extension popup on any webpage to take snapshots!</small>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Inspector Panel -->
+      <section class="inspector-panel" id="inspector-panel">
+        <div class="panel-header" id="panel-header">
+          <div>
+            <h2 id="inspector-title">Select a snapshot from the history</h2>
+            <p id="inspector-url" class="inspector-url">--</p>
+          </div>
+          <div class="panel-actions" id="panel-actions">
+            <button id="btn-copy-inspector-html" class="btn btn-primary hidden">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy HTML</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Code Viewer Body -->
+        <div class="code-container">
+          <div class="code-toolbar">
+            <span class="code-lang">HTML DOM</span>
+            <span class="code-info" id="code-length">0 chars</span>
+          </div>
+          <pre><code id="code-output" class="code-output">Select a capture from the list on the left to inspect its HTML content.</code></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="gallery.js"></script>
+</body>
+</html>

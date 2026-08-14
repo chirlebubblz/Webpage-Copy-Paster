@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webpage Copy Paster</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="4" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Webpage Copy Paster</h1>
+          <p class="brand-subtitle" id="active-domain">Detecting active tab...</p>
+        </div>
+      </div>
+      <span class="badge" id="page-status">Ready</span>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+      <span class="toast-icon">✓</span>
+      <span id="toast-message">HTML Copied to Clipboard!</span>
+    </div>
+
+    <!-- Quick Action: Copy Raw HTML -->
+    <section class="hero-card">
+      <div class="hero-header">
+        <div class="hero-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6" />
+            <polyline points="8 6 2 12 8 18" />
+          </svg>
+          <span>Raw HTML DOM</span>
+        </div>
+        <span class="metrics-badge" id="html-size">-- KB</span>
+      </div>
+      <p class="hero-desc">Extract complete live DOM HTML code directly from the active tab context.</p>
+      <button id="btn-copy-html" class="btn btn-primary btn-block">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copy HTML to Clipboard</span>
+      </button>
+    </section>
+
+    <!-- Capture Options Grid -->
+    <div class="section-label">CAPTURE OPTIONS</div>
+    
+    <div class="actions-grid">
+      <!-- Visible Screenshot -->
+      <button id="btn-screenshot-visible" class="btn btn-card">
+        <div class="card-icon blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </div>
+        <div class="card-info">
+          <span class="card-title">Visible Area</span>
+          <span class="card-sub">PNG Screenshot</span>
+        </div>
+      </button>
+
+      <!-- Full Page Screenshot -->
+      <button id="btn-screenshot-full" class="btn btn-card">
+        <div class="card-icon purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="18" rx="2" />
+            <line x1="2" y1="9" x2="22" y2="9" />
+            <line x1="2" y1="15" x2="22" y2="15" />
+          </svg>
+        </div>
+        <div class="card-info">
+          <span class="card-title">Full Page</span>
+          <span class="card-sub">Stitched PNG</span>
+        </div>
+      </button>
+
+      <!-- Single-File HTML -->
+      <button id="btn-single-file" class="btn btn-card">
+        <div class="card-icon green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <div class="card-info">
+          <span class="card-title">SingleFile HTML</span>
+          <span class="card-sub">Offline Bundle</span>
+        </div>
+      </button>
+
+      <!-- Save PDF -->
+      <button id="btn-save-pdf" class="btn btn-card">
+        <div class="card-icon orange">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="card-info">
+          <span class="card-title">Print / PDF</span>
+          <span class="card-sub">Vector Export</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Page Statistics Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value" id="stat-elements">--</span>
+        <span class="stat-label">Elements</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-images">--</span>
+        <span class="stat-label">Images</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-links">--</span>
+        <span class="stat-label">Links</span>
+      </div>
+    </div>
+
+    <!-- Footer link to Gallery -->
+    <footer class="app-footer">
+      <button id="btn-open-gallery" class="btn-link">
+        <span>Open Gallery & Inspector Dashboard</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="7" y1="17" x2="17" y2="7"></line>
+          <polyline points="7 7 17 7 17 17"></polyline>
+        </svg>
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
