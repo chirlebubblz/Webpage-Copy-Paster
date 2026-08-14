@@ -254,18 +254,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /**
-   * Helper to send runtime tab message
+   * Helper to send runtime tab message with auto content-script injection fallback
    */
-  function sendMessageToTab(tabId, message) {
+  function sendMessageToTab(tabId, message, allowInjectRetry = true) {
     return new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(tabId, message, (response) => {
+      chrome.tabs.sendMessage(tabId, message, async (response) => {
         if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
+          const errorMsg = chrome.runtime.lastError.message || '';
+          if (allowInjectRetry && (errorMsg.includes('Could not establish connection') || errorMsg.includes('Receiving end does not exist'))) {
+            try {
+              // Auto-inject content.js on tabs opened prior to extension load
+              await chrome.scripting.executeScript({
+                target: { tabId: tabId },
+                files: ['content.js']
+              });
+              await delay(200);
+              const retryRes = await sendMessageToTab(tabId, message, false);
+              return resolve(retryRes);
+            } catch (e) {
+              return reject(new Error('Cannot capture protected browser tab (e.g. chrome:// extensions). Switch to a regular webpage tab.'));
+            }
+          }
+          reject(new Error(errorMsg));
         } else {
           resolve(response);
         }
       });
     });
+  }
+
+  function delay(ms) {
+    return new Promise((res) => setTimeout(res, ms));
   }
 
   /**

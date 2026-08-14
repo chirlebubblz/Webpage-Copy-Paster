@@ -175,13 +175,28 @@ async function getSnapshotHistory() {
 }
 
 /**
- * Helper promise wrapper for chrome.tabs.sendMessage
+ * Helper promise wrapper for chrome.tabs.sendMessage with auto content-script injection fallback
  */
-function sendMessageToTab(tabId, message) {
+function sendMessageToTab(tabId, message, allowInjectRetry = true) {
   return new Promise((resolve) => {
-    chrome.tabs.sendMessage(tabId, message, (response) => {
+    chrome.tabs.sendMessage(tabId, message, async (response) => {
       if (chrome.runtime.lastError) {
-        resolve({ success: false, error: chrome.runtime.lastError.message });
+        const errorMsg = chrome.runtime.lastError.message || '';
+        if (allowInjectRetry && (errorMsg.includes('Could not establish connection') || errorMsg.includes('Receiving end does not exist'))) {
+          try {
+            // Auto-inject content.js if tab was opened before extension was loaded/reloaded
+            await chrome.scripting.executeScript({
+              target: { tabId: tabId },
+              files: ['content.js']
+            });
+            await delay(200);
+            const retryRes = await sendMessageToTab(tabId, message, false);
+            return resolve(retryRes);
+          } catch (e) {
+            return resolve({ success: false, error: 'Protected page (e.g. chrome:// extensions gallery). Please switch to a regular web page.' });
+          }
+        }
+        resolve({ success: false, error: errorMsg });
       } else {
         resolve(response);
       }
