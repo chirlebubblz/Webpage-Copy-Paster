@@ -45,12 +45,18 @@
     }
 
     if (request.action === 'PREPARE_FULL_PAGE_SCROLL') {
+      const body = document.body;
+      const html = document.documentElement;
+      const totalHeight = Math.max(
+        body ? body.scrollHeight : 0,
+        body ? body.offsetHeight : 0,
+        body ? body.clientHeight : 0,
+        html ? html.scrollHeight : 0,
+        html ? html.offsetHeight : 0,
+        html ? html.clientHeight : 0
+      );
       const metrics = {
-        totalHeight: Math.max(
-          document.documentElement.scrollHeight,
-          document.body.scrollHeight,
-          document.documentElement.offsetHeight
-        ),
+        totalHeight: totalHeight,
         viewportHeight: window.innerHeight,
         viewportWidth: window.innerWidth,
         devicePixelRatio: window.devicePixelRatio || 1,

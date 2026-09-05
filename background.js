@@ -81,7 +81,7 @@ function captureVisibleTab(retries = 4, retryDelayMs = 600) {
 }
 
 /**
- * Scroll and capture full-page screenshot
+ * Scroll and capture full-page screenshot with OffscreenCanvas stitching
  */
 async function captureFullPage(tabId) {
   // 1. Get page scroll metrics from content script
@@ -90,23 +90,23 @@ async function captureFullPage(tabId) {
     throw new Error('Failed to communicate with webpage content script.');
   }
 
-  const { totalHeight, viewportHeight, originalScrollY } = prepareRes.metrics;
+  const { totalHeight, viewportHeight, viewportWidth, devicePixelRatio, originalScrollY } = prepareRes.metrics;
   const slices = [];
 
   let currentY = 0;
-  // Capture max 15 slices to keep performance fast and quota safe
-  const maxSlices = 15;
+  // Allow up to 40 scroll slices for long pages
+  const maxSlices = 40;
   let sliceCount = 0;
 
   try {
     while (currentY < totalHeight && sliceCount < maxSlices) {
       // Scroll to slice Y
       await sendMessageToTab(tabId, { action: 'SCROLL_TO', y: currentY, delay: 250 });
-      // Pause 550ms between captures to strictly respect Chrome's MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND quota
-      await delay(550);
+      // Pause 400ms between captures to strictly respect Chrome rate limit quota
+      await delay(400);
 
       // Capture slice image with retry protection
-      const sliceDataUrl = await captureVisibleTab(4, 700);
+      const sliceDataUrl = await captureVisibleTab(4, 600);
       slices.push({ y: currentY, dataUrl: sliceDataUrl });
 
       currentY += viewportHeight;
@@ -117,12 +117,55 @@ async function captureFullPage(tabId) {
     await sendMessageToTab(tabId, { action: 'RESTORE_SCROLL', originalScrollY });
   }
 
-  // If only 1 slice, return directly
-  if (slices.length === 1) {
-    return slices[0].dataUrl;
+  // 2. Stitch all captured slices into one complete full-page PNG image via OffscreenCanvas
+  return await stitchSlices(slices, viewportWidth, viewportHeight, devicePixelRatio, totalHeight);
+}
+
+/**
+ * Stitch image slices into a single full-page PNG image via OffscreenCanvas
+ */
+async function stitchSlices(slices, viewportWidth, viewportHeight, devicePixelRatio, totalHeight) {
+  if (!slices || slices.length === 0) return null;
+  if (slices.length === 1) return slices[0].dataUrl;
+
+  const bitmaps = [];
+  for (const slice of slices) {
+    try {
+      const response = await fetch(slice.dataUrl);
+      const blob = await response.blob();
+      const bitmap = await createImageBitmap(blob);
+      bitmaps.push({ y: slice.y, bitmap });
+    } catch (e) {
+      console.warn('Slice bitmap conversion error:', e);
+    }
   }
 
-  return slices[0].dataUrl;
+  if (bitmaps.length === 0) return slices[0].dataUrl;
+
+  const slicePixelWidth = bitmaps[0].bitmap.width;
+  const scale = slicePixelWidth / (viewportWidth || 1);
+  
+  // Calculate total canvas height based on max slice Y + viewport slice height
+  const lastSlice = bitmaps[bitmaps.length - 1];
+  const maxCapturedY = lastSlice.y + viewportHeight;
+  const effectiveTotalHeight = Math.min(totalHeight, maxCapturedY);
+  const totalPixelHeight = Math.round(effectiveTotalHeight * scale);
+
+  const offscreen = new OffscreenCanvas(slicePixelWidth, totalPixelHeight);
+  const ctx = offscreen.getContext('2d');
+
+  for (const item of bitmaps) {
+    const drawY = Math.round(item.y * scale);
+    ctx.drawImage(item.bitmap, 0, drawY);
+    item.bitmap.close();
+  }
+
+  const resultBlob = await offscreen.convertToBlob({ type: 'image/png' });
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(resultBlob);
+  });
 }
 
 /**
